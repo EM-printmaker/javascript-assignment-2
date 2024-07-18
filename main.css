@@ -1,0 +1,69 @@
+@charset "utf-8";
+
+:root {
+  --black: #333333;
+  --white: #f7f7f7;
+  --buttonLine: #d7d7d7;
+  --buttonBack: #eeeeee;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-weight: normal;
+  font-family: "YuGothic", "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Meiryo", "MS PGothic", sans-serif;
+}
+
+body {
+  font-size: 14px;
+}
+
+.main {
+  padding-top: 30px;
+  margin: 0 auto;
+  width: fit-content;
+}
+
+.cal-wrap {
+  display: grid;
+  grid-template-columns: repeat(4, 23.5%);
+  grid-template-rows: 50px;
+  gap: 2%;
+  width: 400px;
+}
+
+.cal-result {
+  align-items: center;
+  background-color: var(--black);
+  display: inline-flex;
+  flex-direction: row-reverse;
+  font-size: 18px;
+  grid-column: span 4;
+  padding: 0 1em;
+}
+
+.cal-result-text {
+  color: var(--white);
+}
+
+.cal-btn {
+  background-color: var(--buttonBack);
+  border: 1px solid var(--buttonLine);
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 10px
+}
+
+.cal-btn:hover {
+  background-color: var(--buttonLine);
+}
+
+.cal-btn-clear {
+  grid-column: span 2;
+}
+
+.cal-btn-equal {
+  grid-column: span 2;
+}
