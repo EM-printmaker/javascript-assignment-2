@@ -1,98 +1,153 @@
-$(document).ready(function(){
-
-  const $result = $(".cal-result-text");
-  const $button = $(".cal-btn");
-  let calFlag = false;
-  let decimal = false;
-  const operator = ["+", "-", "*", "/"];
-  const dot = ".";
-
-
-  // ボタンの数値を取得して実行
-  $button.click(function() {
-    const $dataId = $(this).data('id');
-    const $now = $result.text();
-    const lustWord = $now.slice(-1);
-    const lustWordDelete = $now.slice(0, -1);
-
-    // 文字入力制限
-    const input = () => {
-      if ($now === "0" && $dataId === dot) {
-        $result.text($now + $dataId); // 0かつ入力が.ドットの時、０を消さない
-      } else if ($now === "0" && $dataId === "00") {
-        $result.text($now); //0かつ入力が00の時、00を入力しない
-      } else if ($now === "0" && operator.includes($dataId)) {
-        $result.text($now); // 0かつ入力が演算子の時、演算子を入力しない
-      } else if ($now === "0") {
-        $result.text($dataId);  // 0だけの時、0を消して数字を入れる
-      } else {
-        $result.text($now + $dataId); // 0じゃない時、数値を横に足す
-      }
+$(document).ready(function() {
+  class Calculator {
+    constructor(result, number) {
+      this.result = result;
+      this.number = number;
+      this.lastWord = this.result.slice(-1);
+      this.operator = ["+", "-", "*", "/"];
+      this.dot = ".";
     }
 
-    const operatorInput = () => {
-      // 連続入力制限
-      if (operator.includes(lustWord) && operator.includes($dataId)) {
-        $result.text(lustWordDelete + $dataId); // 演算子が連続して入力された時、演算子は上書きされる
-      } else if (operator.includes(lustWord) && $dataId === "00") {
-        $result.text($now); // 演算子が直前に入力されている時、00を入力しない
-      } else if (dot.includes(lustWord) && dot.includes($dataId)) {
-        $result.text(lustWordDelete + $dataId); // .ドットが連続して入力された時、ドットは上書きされる
-      } else if (operator.includes(lustWord) && dot.includes($dataId)) {
-        $result.text($now + "0" + $dataId); // 演算子が直前に入力されており.ドットが入力された時、ドットの前に0を入れる
-      } else if (dot.includes(lustWord) && operator.includes($dataId)) {
-        $result.text(lustWordDelete + $dataId); //.ドットが直前に入力されており演算子が入力された時、ドットを削除する
-      }
+    // 入力指定
+    inputNumber() {
+      this.addResult();
+      this.decimalLimit();
+      this.resultOverwrite();
+      this.inputLimit();
     }
 
-    // 小数点制御 (error: 演算子の次に整数のみが入力されて計算された時、結果が小数点でもドットが入力できてしまう)
-    const inputDecimal = () => {
-      if (dot.includes(lustWord) && isFinite($dataId)) {
-        decimal = true;
-      } else if (operator.includes($dataId)) {
-        decimal = false;
-      }
-
-      if (decimal && dot.includes($dataId)) {
-        $result.text($now); // decimalがtrueの時、ドットは入力できない
-      }
-    }
-
-    // 計算後に新しく数字を打ち込むとクリアされる
-    const inputClear = () => {
-      if (calFlag && $dataId === "00") {
-        $result.text("0"); // calフラグがtrueかつ00が入力された時0にする
-      } else if (calFlag && isFinite($dataId)) {
-        $result.text($dataId); // calフラグがtrueかつ数字が入力された時resultを上書きする
-      }
-      if ($dataId !== "=") {
-        calFlag = false;
+    // 演算子入力指定
+    inputOperator() {
+      if (this.operator.includes(this.number)) {
+        this.inputNumber();
+        this.inputOperatorLimit() 
+      } else if (this.number === this.dot) {
+        this.inputNumber();
+        this.inputOperatorLimit();
+        this.inputDotLimit();
+      } else if (this.number === "AC") {
+        this.clear();
+      } else if (this.number === "=") {
+        this.cal();
       }
     }
 
     // 計算
-    const cal = () => {
+    cal() {
       calFlag = true;
-      $result.text(eval($now)); // idが = の時、結果を出力
+      $calResult.text(eval(this.result));
     }
 
     // クリア
-    const clear = () => {
+    clear() {
       calFlag = false;
       decimal = false;
-      $result.text(0); // idがACの時、計算をクリアする
+      this.number = 0;
+      this.setResult() 
     }
-    
-    input();
-    operatorInput();
-    inputDecimal();
-    inputClear();
-    
-    if ($dataId === "=") {
-      cal();
+
+    inputLimit() {
+      // resultが0の時
+      if (this.result === "0") {
+        // numberが数字の時resultを上書きする
+        this.result = null;
+        this.setResult();
+        if (this.number === this.dot) {
+          // numberがドットの時０を残して入力する
+          this.result = 0;
+          this.addResult();
+        } else if (this.number === "00" || this.operator.includes(this.number)) {
+          //numberが00もしくは演算子の時入力しない
+          this.clear();
+        }
+      }
+
+      if (this.operator.includes(this.lastWord) && this.number === "00") {
+        // 演算子が直前に入力されている時、00を入力しない
+        this.stopResult();
+      }
     }
-    if ($dataId === "AC") {
-      clear();
+
+    inputOperatorLimit() {
+      if (this.operator.includes(this.lastWord) || this.lastWord === this.dot) {
+        // resultの最後の文字が演算子またはドットの時、最後の文字をnumberで上書き
+        this.lastWordOverwrite();
+      }
     }
+
+    inputDotLimit() {
+      if (this.operator.includes(this.lastWord)) {
+        // resultの最後の文字が演算子の時０とnumberを入力する
+        $calResult.text(this.result + "0" + this.number);
+      }
+    }
+
+    decimalLimit() {
+      if (this.dot.includes(this.lastWord) && isFinite(this.number)) {
+        decimal = true;
+      } else if (this.operator.includes(this.number)) {
+        decimal = false;
+      }
+
+      if (decimal && this.dot.includes(this.number)) {
+        // decimalがtrueの時、ドットは入力できない
+        this.stopResult(); 
+      }
+    }
+
+    resultOverwrite() {
+      if (calFlag && this.number === "00") {
+        // calフラグがtrueかつ00が入力された時0にする
+        this.clear();
+      } else if (calFlag && isFinite(this.number)) {
+        // calフラグがtrueかつ数字が入力された時resultを上書きする
+        this.setResult();
+      }
+      if (this.number !== "=") {
+        calFlag = false;
+      }
+    }
+
+    addResult() {
+      // resultにnumberを追加
+      $calResult.text(this.result + this.number);
+    }
+
+    setResult() {
+      //resultをnumberにする
+      $calResult.text(this.number);
+    }
+
+    stopResult() {
+      // resultを更新しない
+      $calResult.text(this.result);
+    }
+
+    lastWordOverwrite() {
+      // 最後の文字を上書きして入力する
+      $calResult.text(this.result.slice(0, -1) + this.number);
+    }
+  }
+
+  const $calResult = $(".cal-result-text");
+  const $calButton = $(".cal-btn");
+  let calFlag = false;
+  let decimal = false;
+
+  function buttonClick(result, dataId) {
+    let calculator = new Calculator(result, dataId); // Calculatorクラスをインスタンス化
+
+    if (isNaN(dataId)) { // もし入力が記号なら
+      calculator.inputOperator();
+    } else { // もし入力が数字なら
+      calculator.inputNumber();
+    }
+  }
+
+  $calButton.click(function() {
+    const $result = $calResult.text();
+    const $dataId = $(this).data("id");
+    buttonClick($result, $dataId); // クリック時のresultとdata-idを取得
   });
 });
+
